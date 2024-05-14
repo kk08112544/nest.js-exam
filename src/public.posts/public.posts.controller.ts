@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, Body, Param, Query, HttpCode, HttpStatus, NotFoundException } from '@nestjs/common';
 import { PublicPostsService } from './public.posts.service';
 import { CreatePublicPostDto } from './dto/create-public.post.dto';
 import { UpdatePublicPostDto } from './dto/update-public.post.dto';
+
 
 @Controller('public.posts')
 export class PublicPostsController {
@@ -12,14 +13,11 @@ export class PublicPostsController {
     return this.publicPostsService.create(createPublicPostDto);
   }
 
-  @Get()
-  findAll() {
-    return this.publicPostsService.findAll();
-  }
+
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.publicPostsService.findOne(+id);
+    return this.publicPostsService.findOne(id);
   }
 
   @Patch(':id')
