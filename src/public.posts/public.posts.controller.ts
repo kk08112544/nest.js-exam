@@ -3,6 +3,9 @@ import { Controller, Post, Get, Patch, Delete, Body, Param, Query, HttpCode, Htt
 import { PublicPostsService } from './public.posts.service';
 import { CreatePublicPostDto } from './dto/create-public.post.dto';
 import { UpdatePublicPostDto } from './dto/update-public.post.dto';
+import { DeletePublicPostDto } from './dto/delete-public.post.dto';
+import { PaginatedPostsDto } from './dto/paginated-public.post.dto';
+import { FindCategoryDto } from './dto/find-category-public.post.dto';
 import { Post as PostEntity } from './entities/public.post.entity';
 
 
@@ -14,36 +17,34 @@ export class PublicPostsController {
   create(@Body() createPublicPostDto: CreatePublicPostDto) {
     return this.publicPostsService.create(createPublicPostDto);
   }
-
-  @Get()
-  findAll(){
-    return this.publicPostsService.findAll();
+  
+  @Post('/deletedata')
+  remove(@Body() deletePublicPostDto: DeletePublicPostDto) {
+    return this.publicPostsService.remove(deletePublicPostDto);
   }
 
-  @Get(':published')
-  async findPublished(@Param('published') published: boolean) {
-    return this.publicPostsService.findpublished(published);
+  @Post('/searchCategory')
+  getPublishedPosts(
+    @Body() paginatedPostDto: PaginatedPostsDto,
+  ) {
+    const { published, page, limit, title } = paginatedPostDto;
+
+    // const pageNumber = parseInt(page, 10);
+    return this.publicPostsService.getPublishedPosts(published, page, limit, title);
   }
 
-  @Get(':title')
-  async findtitle(@Param('title') title: string) {
-    return this.publicPostsService.findtitle(title);
-  }
+  
+  
 
 
-  @Get(':id')
+  @Post('/getdata/:id')
   findOne(@Param('id') id: string) {
     return this.publicPostsService.findOne(id);
   }
 
 
-  @Patch(':id')
+  @Post('/updateData/:id')
   update(@Param('id') id: string, @Body() updatePublicPostDto: UpdatePublicPostDto) {
     return this.publicPostsService.update(id, updatePublicPostDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.publicPostsService.remove(id);
   }
 }

@@ -1,13 +1,15 @@
-
+import { Like } from 'typeorm';
 import { Injectable, NotFoundException, } from '@nestjs/common';
 import { CreatePublicPostDto } from './dto/create-public.post.dto';
 import { UpdatePublicPostDto } from './dto/update-public.post.dto';
+import { DeletePublicPostDto } from './dto/delete-public.post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Post } from './entities/public.post.entity';
 import { Repository } from 'typeorm';
 import { format } from 'date-fns-tz';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { NotFoundError } from 'rxjs';
+import { PaginatedPostsDto } from './dto/paginated-public.post.dto';
 
 
 
@@ -42,28 +44,165 @@ async create(createPublicPostDto: CreatePublicPostDto) {
           created_at: formattedCreatedAt,
       };
   } catch (error) {
-    throw new HttpException({ error: "error message" }, HttpStatus.INTERNAL_SERVER_ERROR);
+    throw new HttpException({ error: 'error message' }, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }
 
-async findpublished(published: boolean) {
-  const post = await this.postRepository.find({
-    where: { published },
-  });
-  return post;
+
+// async getPublishedPosts(published: boolean, page: number, limit: number, title: string): Promise<any> {
+//   console.log('Published:', published);
+//   console.log('Page:', page);
+//   console.log('Limit:', limit);
+//   console.log('Title:', title);
+
+//   // Calculate skip based on page and limit
+//   const skip = (page - 1) * limit;
+
+//   // Build the where clause conditionally
+//   const where: any = { published };
+//   if (title && title.trim() !== "") {
+//       where.title = Like(`%${title}%`);
+//   }
+
+//   try {
+//     // Find posts and count total
+//     const [posts, totalCount] = await this.postRepository.findAndCount({
+//         where,
+//         take: limit,
+//         skip,
+//     });
+
+//     // Calculate total pages
+//     const totalPages = Math.ceil(totalCount / limit);
+
+//     return {
+//         posts,
+//         count: totalCount,
+//         limit,
+//         page,
+//         total_page: totalPages,
+//     };
+//   } catch (error) {
+//     console.error("Error fetching published posts:", error);
+//     throw new Error("Could not fetch published posts");
+//   }
+// }
+
+// async getPublishedPosts(published: boolean, page: number, limit: number, title: string): Promise<any> {
+//   // Check if published, page, limit, and title are defined
+//   if (published !== undefined && !isNaN(page) && !isNaN(limit) && title !== undefined) {
+//     console.log('Published:', published);
+//     console.log('Page:', page);
+//     console.log('Limit:', limit);
+//     console.log('Title:', title);
+
+//     // Calculate skip based on page and limit
+//     const skip = (page - 1) * limit;
+
+//     // Build the where clause conditionally
+//     const where: any = { published };
+//     if (title.trim() !== "") {
+//       where.title = Like(`%${title}%`);
+//     }
+
+//     try {
+//       // Find posts and count total
+//       const [posts, totalCount] = await this.postRepository.findAndCount({
+//         where,
+//         take: limit,
+//         skip,
+//       });
+
+//       // Calculate total pages
+//       const totalPages = Math.ceil(totalCount / limit);
+
+//       return {
+//         posts,
+//         count: totalCount,
+//         limit,
+//         page,
+//         total_page: totalPages,
+//       };
+//     } catch (error) {
+//       console.error("Error fetching published posts:", error);
+//       throw new Error("Could not fetch published posts");
+//     }
+//   } else {
+//     // Handle missing parameters
+//     throw new Error("Missing or invalid parameters");
+//   }
+// }
+
+// async getPublishedPosts(published: boolean, page: number, limit: number, title: string): Promise<any> {
+//   // Check if published is defined and other parameters are undefined
+//   if (published !== undefined && (page === undefined || isNaN(page)) && (limit === undefined || isNaN(limit)) && title === undefined) {
+//     console.log('Published:', published);
+
+//     try {
+//       // Find posts
+//       const posts = await this.postRepository.find({
+//         where: { published },
+//       });
+
+//       return {
+//         posts,
+//         count: posts.length,
+//         limit: null,
+//         page: null,
+//         total_page: 1,
+//       };
+//     } catch (error) {
+//       console.error("Error fetching published posts:", error);
+//       throw new Error("Could not fetch published posts");
+//     }
+//   } else {
+//     // Handle missing parameters
+//     throw new Error("Missing or invalid parameters");
+//   }
+// }
+async getPublishedPosts(published: boolean, page: number, limit: number, title: string): Promise<any> {
+  // Set default values for page and limit if they are undefined or not numbers
+  let pageNumber = isNaN(page) ? 0 : page;
+  let limitNumber = isNaN(limit) ? 0 : limit;
+
+  console.log('Published:', published);
+  console.log('Page:', pageNumber);
+  console.log('Limit:', limitNumber);
+  console.log('Title:', title);
+
+  // Calculate skip based on page and limit
+  const skip = (pageNumber - 1) * limitNumber;
+
+  // Build the where clause conditionally
+  const where: any = { published };
+  if (title && title.trim() !== "") {
+    where.title = Like(`%${title}%`);
+  }
+
+  try {
+    // Find posts and count total
+    const [posts, totalCount] = await this.postRepository.findAndCount({
+      where,
+      take: limitNumber,
+      skip: skip > 0 ? skip : 0,
+    });
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalCount / (limitNumber > 0 ? limitNumber : totalCount));
+
+    return {
+      posts,
+      count: totalCount,
+      limit: limitNumber,
+      page: pageNumber,
+      total_page: totalPages,
+    };
+  } catch (error) {
+    console.error("Error fetching published posts:", error);
+    throw new Error("Could not fetch published posts");
+  }
 }
 
-async findtitle(title: string) {
-  const post = await this.postRepository.findOne({
-    where: { title },
-  });
-  return post;
-}
-
-async findAll() {
-  const find = this.postRepository.find();
-  return find
-}
 
 
   async findOne(id: string) {
@@ -89,6 +228,7 @@ async findAll() {
         id: post.id,
         title: post.title,
         content: post.content,
+        published: post.published,
         created_at: formattedCreatedAt
     };
     }
@@ -110,7 +250,7 @@ async update(id: string, updatePublicPostDto: UpdatePublicPostDto) {
   if (updatePublicPostDto.hasOwnProperty('published')) {
       post.published = updatePublicPostDto.published;
   }
-
+  console.log(post.published);
   Object.assign(post, updatePublicPostDto);
 
   const currentTime = new Date();
@@ -154,8 +294,8 @@ async update(id: string, updatePublicPostDto: UpdatePublicPostDto) {
   };
 }
 
-  async remove(id: string) {
-    const toDelete = await this.postRepository.delete(id);
+  async remove(deletePublicPostDto: DeletePublicPostDto) {
+    const toDelete = await this.postRepository.delete(deletePublicPostDto);
     return toDelete;
   }
 }
