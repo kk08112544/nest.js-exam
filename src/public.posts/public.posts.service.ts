@@ -1,3 +1,4 @@
+
 import { Injectable, NotFoundException, } from '@nestjs/common';
 import { CreatePublicPostDto } from './dto/create-public.post.dto';
 import { UpdatePublicPostDto } from './dto/update-public.post.dto';
@@ -7,9 +8,7 @@ import { Repository } from 'typeorm';
 import { format } from 'date-fns-tz';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { NotFoundError } from 'rxjs';
-import { Pagination } from 'nestjs-typeorm-paginate';
-import { paginate } from 'nestjs-typeorm-paginate';
-import { IPaginationOptions } from 'nestjs-typeorm-paginate';
+
 
 
 @Injectable()
@@ -47,6 +46,25 @@ async create(createPublicPostDto: CreatePublicPostDto) {
   }
 }
 
+async findpublished(published: boolean) {
+  const post = await this.postRepository.find({
+    where: { published },
+  });
+  return post;
+}
+
+async findtitle(title: string) {
+  const post = await this.postRepository.findOne({
+    where: { title },
+  });
+  return post;
+}
+
+async findAll() {
+  const find = this.postRepository.find();
+  return find
+}
+
 
   async findOne(id: string) {
     const post = await this.postRepository.findOne({
@@ -79,6 +97,7 @@ async create(createPublicPostDto: CreatePublicPostDto) {
     return post;
   }
 
+ 
   
 
 async update(id: string, updatePublicPostDto: UpdatePublicPostDto) {
